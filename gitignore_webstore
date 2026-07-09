@@ -1,0 +1,9 @@
+__pycache__/
+.venv/
+.streamlit/secrets.toml
+*.log
+.DS_Store
+.idea/
+.vscode/
+produtos.json
+produtos.csv

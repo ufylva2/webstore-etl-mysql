@@ -1,0 +1,6 @@
+requests
+beaupy
+mysql-connector-python
+streamlit
+pandas
+plotly
