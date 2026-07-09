@@ -61,11 +61,11 @@ try:
     df_reviews = carregar_reviews()
 except mysql.connector.Error as erro:
     st.error(f"❌ Não foi possível ligar à base de dados: {erro}")
-    st.info("Confirma que o MySQL está a correr e que já correste 'Importar API' no PL_LUIS.py.")
+    st.info("Confirma que o MySQL está a correr e que já correste 'Importar API' no webstore.py.")
     st.stop()
 
 if df_produtos.empty:
-    st.warning("⚠️ Ainda não existem produtos na base de dados. Corre o PL_LUIS.py e escolhe 'Importar API'.")
+    st.warning("⚠️ Ainda não existem produtos na base de dados. Corre o webstore.py e escolhe 'Importar API'.")
     st.stop()
 
 # Sidebar: filtros
@@ -144,12 +144,27 @@ with tab1:
         )
         st.plotly_chart(fig, use_container_width=True)
     with col2:
+        # Com muitas marcas, um gráfico circular fica ilegível (fatias de 1%).
+        # Mostra-se o Top 10 e agrupa-se o resto em "Outras marcas".
         contagem_marca = df_filtrado['marca'].value_counts().reset_index()
         contagem_marca.columns = ['marca', 'quantidade']
-        fig = px.pie(
-            contagem_marca, values='quantidade', names='marca',
-            color_discrete_sequence=px.colors.qualitative.Pastel,
-            title="Distribuição de Produtos por Marca"
+        top_n = 10
+
+        if len(contagem_marca) > top_n:
+            top_marcas = contagem_marca.head(top_n).copy()
+            outras_qtd = contagem_marca['quantidade'].iloc[top_n:].sum()
+            top_marcas = pd.concat([
+                top_marcas,
+                pd.DataFrame([{'marca': 'Outras marcas', 'quantidade': outras_qtd}])
+            ], ignore_index=True)
+        else:
+            top_marcas = contagem_marca
+
+        fig = px.bar(
+            top_marcas.sort_values('quantidade'), x='quantidade', y='marca', orientation='h',
+            color='quantidade', color_continuous_scale='purp',
+            title=f"Top {top_n} Marcas por Nº de Produtos" if len(contagem_marca) > top_n else "Produtos por Marca",
+            labels={'quantidade': 'Nº de produtos', 'marca': ''}
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -214,3 +229,4 @@ with tab4:
         .sort_values('Produto'),
         use_container_width=True
     )
+
